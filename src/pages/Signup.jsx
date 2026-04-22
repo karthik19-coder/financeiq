@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import useOnboarding from '../hooks/useOnboarding';
+import { useEffect } from 'react';
+import { useFinance } from '../context/FinanceContext';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -13,14 +15,17 @@ const Signup = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
-  const { user, signup } = useAuth();
+  const { user, signup, authState } = useAuth();
+  const { loading: financeLoading } = useFinance();
   const navigate = useNavigate();
   const { checkAndRedirect } = useOnboarding();
 
-  // Bug 8 fix: Redirect to dashboard if already logged in
-  if (user) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  // Bug 8 fix: Redirect to dashboard if already logged in and data loaded
+  useEffect(() => {
+    if (user && authState === 'AUTHENTICATED' && !financeLoading) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, authState, financeLoading, navigate]);
 
   const handleInputChange = (e) => {
     setFormData({

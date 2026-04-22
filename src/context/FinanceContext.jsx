@@ -40,12 +40,22 @@ export function FinanceProvider({ children }) {
         getDocs(query(collection(db, "budgets"), where("uid", "==", currentUser.uid)))
       ]);
 
-      const uData = uSnap.exists() ? uSnap.data() : {
-        name: currentUser.displayName || "User",
-        monthlyIncome: 0,
-        savingsGoal: 0,
-        currency: "INR"
-      };
+      let uData;
+      if (!uSnap.exists()) {
+        uData = {
+          name: currentUser.displayName || "User",
+          monthlyIncome: 0,
+          savingsGoal: 0,
+          currency: "INR",
+          uid: currentUser.uid,
+          hasCompletedOnboarding: false,
+          createdAt: serverTimestamp()
+        };
+        // Await document creation
+        await setDoc(doc(db, "users", currentUser.uid), uData, { merge: true });
+      } else {
+        uData = uSnap.data();
+      }
       
       const bData = bSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 

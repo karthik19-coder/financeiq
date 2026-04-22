@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import useOnboarding from '../hooks/useOnboarding';
+import { useEffect } from 'react';
+import { useFinance } from '../context/FinanceContext';
 
 // Bug 6 fix: Map raw Firebase error codes to user-friendly messages
 const getFirebaseErrorMessage = (errorCode) => {
@@ -29,14 +31,17 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
-  const { user, login, loginWithGoogle } = useAuth();
+  const { user, login, loginWithGoogle, authState } = useAuth();
+  const { loading: financeLoading } = useFinance();
   const navigate = useNavigate();
   const { checkAndRedirect } = useOnboarding();
 
-  // Bug 8 fix: Redirect to dashboard if already logged in
-  if (user) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  // Bug 8 fix: Redirect to dashboard if already logged in and data loaded
+  useEffect(() => {
+    if (user && authState === 'AUTHENTICATED' && !financeLoading) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, authState, financeLoading, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
